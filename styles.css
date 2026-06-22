@@ -1,0 +1,771 @@
+/* ── Reset ───────────────────────────────────────────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+input, textarea, select, button, a, label { touch-action: manipulation; }
+
+:root {
+    --primary-color: #2E60B2;
+    --primary-hover: #14387F;
+    --secondary-color: #B8C3D8;
+    --accent-color: #08D3FA;
+    --bg-color: #F1F3F7;
+    --card-bg: #ffffff;
+    --text-primary: #2E60B2;
+    --text-secondary: #B8C3D8;
+    --border-color: #B8C3D8;
+    --shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px -1px rgba(0,0,0,.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    padding-bottom: 140px;
+}
+
+/* ── Brand logo (tekst) ──────────────────────────────────────────────────────── */
+.brand-name-text {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
+    line-height: 1;
+}
+.brand-bike {
+    font-size: 1.55rem;
+    font-weight: 300;
+    color: var(--accent-color);
+    letter-spacing: 0.01em;
+}
+.brand-imbus {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-align: left;
+    margin-top: 2px;
+}
+.desktop-only { display: block; }
+.mobile-search-btn { display: none; }
+
+/* ── Górny pasek ─────────────────────────────────────────────────────────────── */
+.top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 16px 0;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+}
+.brand {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    flex-shrink: 0;
+    align-items: center;
+}
+.logo-wrapper {
+    display: block;
+    flex-shrink: 0;
+}
+.brand-logo {
+    height: 36px;
+    width: auto;
+    display: block;
+}
+.search-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    max-width: 640px;
+}
+.search-box {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    background: rgba(184,195,216,.12);
+    border: 1px solid rgba(184,195,216,.35);
+    border-radius: 999px;
+    overflow: hidden;
+    padding: 0;
+}
+.search-box input {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.search-box input::placeholder { color: var(--secondary-color); }
+.search-box input:focus { outline: none; }
+
+/* ── Przyciski ───────────────────────────────────────────────────────────────── */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.btn-primary { background-color: var(--primary-color); color: white; }
+.btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.btn-secondary { background-color: var(--secondary-color); color: white; }
+.btn-secondary:hover { background-color: var(--primary-color); }
+.btn-search {
+    background-color: var(--primary-color);
+    color: white;
+    white-space: nowrap;
+    padding: 12px 28px;
+    border: none;
+    font-weight: 600;
+    border-radius: 999px;
+    transition: background-color .2s ease;
+    min-width: 100px;
+}
+.btn-search:hover { background-color: var(--primary-hover); }
+
+.btn-icon {
+    width: 36px; height: 36px; padding: 0; min-width: 36px;
+    border-radius: 50%; font-size: 1rem;
+    background-color: #F1F3F7; color: var(--primary-color);
+    border: none; cursor: pointer; transition: all .12s ease;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-icon:hover { background-color: #E6E9EE; }
+.btn-icon.btn-danger { background-color: #F1F3F7; color: #ef4444; }
+.btn-icon.btn-danger:hover { background-color: #fee2e2; color: #dc2626; }
+
+.card-actions { display: flex; align-items: center; gap: 8px; }
+.repair-card-footer {
+    display: flex; justify-content: flex-end;
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(184,195,216,.2);
+}
+.btn-status-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border-radius: 999px; border: none; cursor: pointer;
+    font-size: .78rem; font-weight: 700; transition: all .15s ease;
+}
+.btn-status-toggle.status-pending {
+    background: #fee2e2; color: #ef4444;
+}
+.btn-status-toggle.status-pending:hover { background: #fca5a5; }
+.btn-status-toggle.status-done {
+    background: #dcfce7; color: #16a34a;
+}
+.btn-status-toggle.status-done:hover { background: #86efac; }
+
+/* Przyciski okrągłe w topbar */
+.logout-btn, .settings-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(184,195,216,.3);
+    transition: all .3s;
+    flex-shrink: 0;
+}
+.logout-btn { background-color: #B8C3D8; color: white; }
+.logout-btn:hover { background-color: #08D3FA; box-shadow: 0 6px 16px rgba(8,211,250,.4); transform: translateY(-2px); }
+.settings-btn { background-color: var(--primary-color); color: white; }
+.settings-btn:hover { background-color: var(--primary-hover); box-shadow: 0 6px 16px rgba(46,96,178,.4); transform: translateY(-2px); }
+
+.mobile-search-btn {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 50%;
+    background-color: var(--primary-color); color: white;
+    border: none; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(46,96,178,.3);
+    transition: all .3s; flex-shrink: 0;
+}
+.mobile-search-btn:hover { background-color: var(--primary-hover); }
+
+/* ── Sekcje ──────────────────────────────────────────────────────────────────── */
+.section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px; padding: 0 8px 8px; margin-top: 18px;
+    border-bottom: 1px solid rgba(184,195,216,.25);
+}
+.section-title {
+    font-size: 2.1rem; margin: 0; color: var(--primary-color);
+    font-weight: 800; letter-spacing: -0.02em;
+}
+
+/* ── Karta serwisu ───────────────────────────────────────────────────────────── */
+.repairs-list {
+    display: flex; flex-direction: column; gap: 0; margin-top: 12px;
+}
+.repair-card {
+    background: var(--card-bg); border-radius: 12px;
+    padding: 12px 14px; box-shadow: var(--shadow); transition: all .3s;
+    border-left: 4px solid var(--primary-color); margin-bottom: 8px;
+}
+.repair-card:hover { transform: translateX(2px); box-shadow: var(--shadow-lg); }
+.repair-card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; margin-bottom: 8px;
+}
+.repair-main-info { flex: 1; min-width: 0; }
+.repair-date-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; flex-wrap: wrap; }
+.repair-date { font-size: .82rem; color: var(--text-secondary); }
+.repair-order-badge {
+    font-size: .72rem; font-weight: 700; color: var(--primary-color);
+    background: rgba(46,96,178,.1); border-radius: 999px;
+    padding: 2px 8px; white-space: nowrap;
+}
+.repair-owner { font-size: .95rem; font-weight: 700; color: var(--primary-color); }
+.repair-bike-model { font-size: .85rem; color: var(--secondary-color); font-weight: 500; }
+.repair-notes {
+    font-size: .82rem; color: var(--text-secondary);
+    margin-top: 6px; font-style: italic;
+    padding-top: 6px; border-top: 1px solid rgba(184,195,216,.3);
+}
+
+/* Chipy usług */
+.service-chips-row {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px;
+}
+.service-chip {
+    display: inline-block; padding: 3px 10px;
+    background: rgba(46,96,178,.08); color: var(--primary-color);
+    border-radius: 999px; font-size: .78rem; font-weight: 600;
+}
+.no-services { font-size: .82rem; color: var(--text-secondary); font-style: italic; }
+
+/* ── Karta roweru ────────────────────────────────────────────────────────────── */
+.vehicles-list {
+    display: flex; flex-direction: column; gap: 15px; margin-top: 20px;
+}
+.vehicle-card {
+    background: var(--card-bg); border-radius: 12px; padding: 20px;
+    box-shadow: var(--shadow); transition: all .3s;
+    border-left: 4px solid var(--secondary-color); cursor: pointer;
+}
+.vehicle-card:hover { transform: translateX(4px); box-shadow: var(--shadow-lg); }
+.vehicle-card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+}
+.vehicle-reg-and-brand { display: flex; flex-direction: column; gap: 4px; }
+.reg-brand-row { display: flex; align-items: center; gap: 12px; }
+.vehicle-reg-and-brand h3 { margin: 0; font-size: 1.2rem; color: var(--primary-color); }
+.vehicle-reg-and-brand .brand-model-text { font-size: .95rem; color: var(--secondary-color); font-weight: 600; }
+.last-repair-text { font-size: .82rem; color: var(--text-secondary); font-weight: 500; }
+.vehicle-details {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;
+}
+.info-item { display: flex; flex-direction: column; gap: 2px; }
+.info-label {
+    font-size: .72rem; color: var(--text-secondary); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px;
+}
+.info-value { font-size: .88rem; color: var(--text-primary); font-weight: 500; }
+
+/* Grupowanie */
+.repair-group-header {
+    display: flex; align-items: center;
+    margin: 24px 0 12px; padding: 12px 0 8px;
+    border-bottom: 1px solid rgba(184,195,216,.35);
+    color: var(--text-secondary); font-size: .92rem;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+.repair-group-header span { background: var(--bg-color); padding: 0 10px; }
+
+/* Banner filtra */
+.repair-filter-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    background-color: rgba(46,96,178,.08); color: var(--primary-color);
+    padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; font-weight: 700;
+}
+.back-to-bikes-btn {
+    background: rgba(46,96,178,.12); border: none; color: var(--primary-color);
+    padding: 8px 12px; border-radius: 999px; font-weight: 700; cursor: pointer;
+}
+.back-to-bikes-btn:hover { background: rgba(46,96,178,.18); }
+.back-to-bikes-btn:focus { outline: none; }
+
+/* ── Dolny pasek ─────────────────────────────────────────────────────────────── */
+.bottom-actions {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    display: flex; justify-content: center; align-items: center;
+    padding: 14px 20px;
+    background-color: rgba(255,255,255,.98);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -10px 25px rgba(0,0,0,.08); z-index: 50;
+}
+.view-toggle {
+    display: inline-flex;
+    background: rgba(184,195,216,.12);
+    border: 1px solid rgba(184,195,216,.35);
+    border-radius: 999px; overflow: hidden; padding: 4px;
+}
+.toggle-option {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 130px; padding: 11px 18px;
+    font-size: .95rem; font-weight: 600; color: var(--secondary-color);
+    cursor: pointer; transition: background-color .2s ease, color .2s ease;
+    border-radius: 999px;
+}
+.toggle-option.active { background: var(--primary-color); color: white; }
+.btn-fab {
+    position: fixed; right: 24px; bottom: 90px;
+    width: 60px; height: 60px; border-radius: 50%;
+    padding: 0; font-size: 2rem; font-weight: 700;
+    box-shadow: 0 12px 30px rgba(0,0,0,.18); z-index: 100;
+}
+.add-client-fab-wrapper {
+    position: fixed; left: 24px; bottom: 90px;
+    z-index: 100;
+}
+.btn-fab-client {
+    position: static;
+    width: 60px; height: 60px; border-radius: 50%;
+    padding: 0; display: flex; align-items: center; justify-content: center;
+    background: #08D3FA; color: white;
+    box-shadow: 0 12px 30px rgba(8,211,250,.35);
+    border: none; cursor: pointer; transition: background .2s, transform .15s;
+}
+.btn-fab-client:hover { background: #06b8db; transform: scale(1.07); }
+/* Sekcje w formularzu klienta */
+.client-form-section {
+    margin-bottom: 0; padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+.client-form-section:last-of-type { border-bottom: none; }
+.client-form-section .form-group { margin-bottom: 14px; }
+.client-form-section .form-group:last-child { margin-bottom: 0; }
+.client-section-title {
+    font-size: .85rem; font-weight: 700; color: var(--primary-color);
+    text-transform: uppercase; letter-spacing: .05em;
+    margin-bottom: 14px; display: block;
+}
+.client-section-toggle {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    margin-bottom: 0;
+}
+.client-section-toggle input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: var(--primary-color); flex-shrink: 0;
+}
+.client-section-toggle .client-section-title { margin-bottom: 0; }
+/* formularz klienta — bez zewnętrznego paddingu (sekcje go mają) */
+#addClientForm { padding: 0; }
+
+/* ── Loader / brak wyników ───────────────────────────────────────────────────── */
+.loader { text-align: center; padding: 40px; }
+.spinner {
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%; width: 50px; height: 50px;
+    animation: spin 1s linear infinite; margin: 0 auto 15px;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.no-results { text-align: center; padding: 60px 20px; color: var(--text-secondary); font-size: 1.1rem; }
+.hidden { display: none !important; }
+
+/* ── Modal ───────────────────────────────────────────────────────────────────── */
+.modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,.5);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000; padding: 20px; overflow-y: auto;
+}
+.modal-content {
+    background: var(--card-bg); border-radius: 16px;
+    width: 100%; max-width: 600px; max-height: 90vh;
+    overflow-y: auto; box-shadow: var(--shadow-lg);
+    animation: slideIn .3s ease-out;
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-50px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 24px; border-bottom: 1px solid var(--border-color);
+    position: sticky; top: 0; background: var(--card-bg); z-index: 1;
+}
+.modal-header h2 { font-size: 1.4rem; color: var(--text-primary); }
+.close-btn {
+    background: none; border: none; font-size: 2rem; color: var(--text-secondary);
+    cursor: pointer; line-height: 1; padding: 0; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px; transition: all .2s;
+}
+.close-btn:hover { background-color: var(--bg-color); color: var(--text-primary); }
+
+/* ── Formularz ───────────────────────────────────────────────────────────────── */
+form { padding: 24px; }
+.form-group { margin-bottom: 18px; }
+.form-group label {
+    display: block; margin-bottom: 7px; font-weight: 600; color: var(--text-primary);
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%; padding: 11px 15px;
+    border: 2px solid var(--border-color); border-radius: 10px;
+    font-size: 1rem; font-family: inherit; transition: border-color .3s;
+    background: white; color: var(--text-primary);
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus { outline: none; border-color: var(--primary-color); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-actions {
+    display: flex; gap: 12px; justify-content: flex-end;
+    margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-color);
+}
+
+/* ── Selektor roweru (w formularzu serwisu) ──────────────────────────────────── */
+.bike-selector { position: relative; }
+.bike-search-wrapper { position: relative; }
+.bike-search-wrapper input {
+    width: 100%; padding: 11px 15px;
+    border: 2px solid var(--border-color); border-radius: 10px;
+    font-size: 1rem; transition: border-color .3s;
+}
+.bike-search-wrapper input:focus { outline: none; border-color: var(--primary-color); }
+.bike-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: white; border: 1.5px solid var(--border-color);
+    border-radius: 10px; box-shadow: var(--shadow-lg);
+    z-index: 200; max-height: 220px; overflow-y: auto;
+}
+.bike-dropdown-item {
+    padding: 10px 14px; cursor: pointer; transition: background .15s;
+    border-bottom: 1px solid rgba(184,195,216,.2);
+}
+.bike-dropdown-item:last-child { border-bottom: none; }
+.bike-dropdown-item:hover { background: rgba(46,96,178,.06); }
+.bike-dropdown-owner { font-size: .93rem; font-weight: 600; color: var(--primary-color); }
+.bike-dropdown-detail { font-size: .8rem; color: var(--text-secondary); }
+.bike-dropdown-add {
+    color: var(--primary-color); font-weight: 700; font-size: .9rem;
+    background: rgba(46,96,178,.04);
+}
+.bike-dropdown-add:hover { background: rgba(46,96,178,.1); }
+
+.selected-bike-card {
+    background: rgba(46,96,178,.07);
+    border: 1.5px solid var(--primary-color);
+    border-radius: 10px; padding: 12px 14px;
+}
+.selected-bike-info {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+    font-size: .9rem; color: var(--text-primary); line-height: 1.5;
+}
+.clear-bike-btn {
+    background: none; border: none; font-size: 1.4rem;
+    color: var(--text-secondary); cursor: pointer; padding: 0;
+    line-height: 1; flex-shrink: 0; margin-top: -2px;
+}
+.clear-bike-btn:hover { color: var(--primary-color); }
+
+/* ── Lista usług w formularzu ────────────────────────────────────────────────── */
+.services-section {
+    border: 2px solid var(--border-color);
+    border-radius: 10px; overflow: hidden;
+}
+.services-checklist {
+    max-height: 200px; overflow-y: auto;
+    padding: 8px 0;
+}
+.service-check-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px; cursor: pointer;
+    transition: background .12s; font-size: .93rem; color: var(--text-primary);
+    font-weight: 500;
+}
+.service-check-item:hover { background: rgba(46,96,178,.05); }
+.service-check-item input[type="checkbox"] {
+    width: 16px; height: 16px; flex-shrink: 0;
+    accent-color: var(--primary-color);
+    border: none; padding: 0; border-radius: 0;
+}
+.no-templates-msg {
+    padding: 14px; font-size: .88rem; color: var(--text-secondary); text-align: center;
+}
+
+.custom-service-input-row {
+    display: flex; gap: 0;
+    border-top: 1px solid rgba(184,195,216,.3);
+}
+.custom-service-input-row input {
+    flex: 1; border: none; border-radius: 0;
+    padding: 10px 14px; font-size: .93rem;
+    background: rgba(184,195,216,.08);
+}
+.custom-service-input-row input:focus { outline: none; background: white; }
+.custom-service-input-row .btn {
+    border-radius: 0; padding: 10px 18px; font-size: .88rem; white-space: nowrap;
+}
+
+.custom-services-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 8px 12px; min-height: 0;
+    border-top: 1px solid rgba(184,195,216,.2);
+}
+.custom-services-tags:empty { display: none; }
+.custom-service-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; background: rgba(8,211,250,.12);
+    color: var(--primary-color); border-radius: 999px;
+    font-size: .82rem; font-weight: 600;
+}
+.remove-service-btn {
+    background: none; border: none; font-size: 1rem; font-weight: 700;
+    color: var(--secondary-color); cursor: pointer; padding: 0;
+    line-height: 1; display: flex; align-items: center;
+}
+.remove-service-btn:hover { color: #ef4444; }
+
+/* ── Logo upload w ustawieniach ──────────────────────────────────────────────── */
+.logo-upload-area { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.logo-preview-wrap { line-height: 0; }
+.logo-preview {
+    max-height: 80px; max-width: 240px; object-fit: contain;
+    border: 1.5px solid var(--border-color); border-radius: 8px;
+    padding: 6px; background: white;
+}
+.logo-placeholder {
+    display: inline-block; padding: 10px 16px;
+    color: var(--text-secondary); font-size: .88rem;
+    border: 1.5px dashed var(--border-color); border-radius: 8px;
+    background: rgba(184,195,216,.08);
+}
+.logo-upload-actions { display: flex; gap: 8px; align-items: center; }
+.logo-upload-btn { padding: 8px 18px; font-size: .88rem; cursor: pointer; }
+.logo-hint { font-size: .78rem; color: var(--text-secondary); }
+
+/* ── Ustawienia — sekcje ─────────────────────────────────────────────────────── */
+.settings-body { padding: 24px; }
+.settings-section { margin-bottom: 28px; }
+.settings-section-title {
+    font-size: 1rem; font-weight: 700; color: var(--primary-color);
+    margin-bottom: 14px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-color);
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.settings-section form { padding: 0; }
+.settings-section .btn-primary { margin-top: 8px; }
+
+.template-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.template-item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 8px 12px;
+    background: rgba(46,96,178,.05); border-radius: 8px;
+    font-size: .93rem; color: var(--text-primary);
+}
+.template-add-row { display: flex; gap: 8px; }
+.template-add-row input {
+    flex: 1; padding: 10px 14px;
+    border: 2px solid var(--border-color); border-radius: 999px;
+    font-size: .93rem;
+}
+.template-add-row input:focus { outline: none; border-color: var(--primary-color); }
+
+/* ── Pole info roweru w formularzu serwisu ───────────────────────────────────── */
+.vehicle-info {
+    margin-top: 10px; padding: 12px;
+    background-color: #dbeafe; border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    font-size: .88rem; color: var(--text-primary);
+}
+
+/* ── Tooltips ─────────────────────────────────────────────────────────────────── */
+@media (hover: hover) {
+    [data-tooltip]:not(.btn-fab) { position: relative; }
+    [data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute; bottom: calc(100% + 8px); left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b; color: #fff;
+        font-size: .72rem; font-weight: 500;
+        padding: 5px 10px; border-radius: 6px;
+        white-space: nowrap; pointer-events: none;
+        opacity: 0; transition: opacity .15s ease; z-index: 300;
+    }
+    [data-tooltip]::before {
+        content: ''; position: absolute; bottom: calc(100% + 2px);
+        left: 50%; transform: translateX(-50%);
+        border: 5px solid transparent; border-top-color: #1e293b;
+        pointer-events: none; opacity: 0; transition: opacity .15s ease; z-index: 300;
+    }
+    [data-tooltip-pos="bottom"]::after { bottom: auto; top: calc(100% + 8px); }
+    [data-tooltip-pos="bottom"]::before {
+        bottom: auto; top: calc(100% + 2px);
+        border-top-color: transparent; border-bottom-color: #1e293b;
+    }
+    [data-tooltip-pos="left"]::after {
+        bottom: 50%; left: auto; right: calc(100% + 8px); transform: translateY(50%);
+    }
+    [data-tooltip-pos="left"]::before {
+        bottom: 50%; left: auto; right: calc(100% + 2px); transform: translateY(50%);
+        border-top-color: transparent; border-left-color: #1e293b;
+    }
+    [data-tooltip]:hover::after, [data-tooltip]:hover::before { opacity: 1; }
+}
+
+/* ── Responsywność ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .desktop-only { display: none !important; }
+    .desktop-search { display: none !important; }
+    .mobile-search-btn { display: flex; }
+    .search-section { max-width: 100%; width: auto; }
+    .repair-card-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .form-actions { flex-direction: column-reverse; }
+    .form-actions .btn { width: 100%; }
+    .modal-content { margin: 20px 0; }
+    .btn-fab { bottom: 80px; }
+    .btn-search { padding: 10px 12px; }
+    .vehicle-details { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+    .container { padding: 14px; }
+    .repair-card { padding: 11px 12px; }
+    .vehicle-details { grid-template-columns: 1fr; }
+    .repair-filter-banner { flex-direction: column; gap: 8px; align-items: flex-start; }
+}
+
+/* ── Print — A5 pionowy ──────────────────────────────────────────────────────── */
+#printArea { display: none; }
+
+@media print {
+    body > * { display: none !important; }
+    #printArea { display: block !important; }
+
+    @page {
+        size: A5 portrait;
+        margin: 12mm 14mm;
+    }
+
+    .print-doc {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 10pt;
+        color: #000;
+        line-height: 1.45;
+    }
+
+    .print-header {
+        text-align: center;
+        padding-bottom: 8pt;
+        border-bottom: 1.5pt solid #000;
+        margin-bottom: 9pt;
+    }
+    .print-header-with-logo {
+        display: flex;
+        align-items: center;
+        gap: 12pt;
+        text-align: left;
+    }
+    .print-logo {
+        max-height: 70pt;
+        max-width: 150pt;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+    .print-header-text { flex: 1; }
+    .print-workshop-name { font-size: 13pt; font-weight: bold; margin-bottom: 3pt; }
+    .print-workshop-detail { font-size: 9pt; color: #444; }
+    .print-workshop-contact { font-size: 9pt; color: #444; margin-top: 2pt; }
+
+    .print-title-row {
+        margin: 8pt 0 7pt; padding-bottom: 5pt;
+        border-bottom: 1pt solid #999;
+    }
+    .print-title-text { font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: .5pt; }
+
+    .print-section {
+        margin-bottom: 7pt; padding-bottom: 7pt;
+        border-bottom: 0.5pt solid #ccc;
+    }
+    .print-section-label {
+        font-size: 7.5pt; font-weight: bold;
+        text-transform: uppercase; letter-spacing: .5pt;
+        color: #666; margin-bottom: 3pt;
+    }
+    .print-section-value { font-size: 10pt; margin-bottom: 1.5pt; }
+
+    .print-services-list {
+        margin: 4pt 0 4pt 14pt; padding: 0;
+        list-style-type: disc;
+    }
+    .print-services-list li { margin-bottom: 2.5pt; font-size: 10pt; }
+    .print-notes { font-size: 9pt; color: #444; margin-top: 4pt; font-style: italic; }
+
+    .print-costs { margin-top: 9pt; }
+    .print-costs-table { width: 100%; border-collapse: collapse; }
+    .print-costs-table td {
+        padding: 5pt 2pt;
+        font-size: 10pt;
+        border-bottom: 0.5pt solid #bbb;
+        vertical-align: bottom;
+    }
+    .print-cost-value {
+        border-bottom: 1pt solid #000 !important;
+        width: 100pt; text-align: right;
+    }
+    .print-total-row td {
+        font-size: 11pt; border-top: 1.5pt solid #000 !important;
+        border-bottom: 0.5pt solid #bbb; padding-top: 5pt !important;
+    }
+
+    .print-signature {
+        margin-top: 18pt; font-size: 10pt; padding-top: 6pt;
+    }
+
+    /* Protokół przyjęcia */
+    .print-rodo { border-bottom: 0.5pt solid #ccc; }
+    .print-rodo-text {
+        font-size: 8pt; color: #333; line-height: 1.5;
+        margin-top: 3pt; text-align: justify;
+    }
+    .print-sig-row {
+        display: flex; gap: 20pt; margin-top: 18pt;
+    }
+    .print-sig-block { flex: 1; }
+    .print-sig-line {
+        border-bottom: 1pt solid #000;
+        height: 24pt; margin-bottom: 4pt;
+    }
+    .print-sig-label { font-size: 7.5pt; color: #555; text-align: center; }
+}
+
+/* ── Animacje toast ───────────────────────────────────────────────────────────── */
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(100px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutRight {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(100px); }
+}

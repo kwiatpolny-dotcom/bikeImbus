@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bike Imbus</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2E60B2">
+</head>
+<body>
+<div class="container">
+
+    <!-- Górny pasek -->
+    <div class="top-bar">
+        <div class="brand">
+            <div class="logo-wrapper">
+                <img src="logo.svg" alt="bikeImbus" class="brand-logo">
+            </div>
+            <p class="subtitle desktop-only" id="workshopSubtitle">Warsztat rowerowy</p>
+        </div>
+        <section class="search-section">
+            <div class="search-box desktop-search">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Szukaj po nazwisku lub telefonie..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn" class="btn btn-search">Szukaj</button>
+            </div>
+            <button id="mobileSearchBtn" class="mobile-search-btn" title="Wyszukaj">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </button>
+            <button id="settingsBtn" class="settings-btn" data-tooltip="Ustawienia warsztatu" data-tooltip-pos="bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+            <button id="logoutBtn" class="logout-btn" data-tooltip="Wyloguj się" data-tooltip-pos="bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+        </section>
+    </div>
+
+    <main>
+        <!-- Loader -->
+        <div id="loader" class="loader hidden">
+            <div class="spinner"></div>
+            <p>Ładowanie danych...</p>
+        </div>
+
+        <!-- Lista serwisów -->
+        <section class="repairs-section">
+            <div class="section-header">
+                <h2 class="section-title">Serwisy</h2>
+            </div>
+            <div id="repairsList" class="repairs-list"></div>
+        </section>
+
+        <!-- Lista rowerów -->
+        <section class="vehicles-section hidden">
+            <div class="section-header">
+                <h2 class="section-title">Rowery</h2>
+            </div>
+            <div id="vehiclesList" class="vehicles-list"></div>
+        </section>
+
+        <!-- Brak wyników -->
+        <div id="noResults" class="no-results hidden"><p>Nie znaleziono serwisów</p></div>
+        <div id="noVehicles" class="no-results hidden"><p>Nie znaleziono rowerów</p></div>
+
+        <!-- Dolny pasek -->
+        <section id="bottomActions" class="bottom-actions">
+            <button id="toggleViewBtn" class="view-toggle" type="button">
+                <span class="toggle-option active" data-target="repairs">Serwisy</span>
+                <span class="toggle-option" data-target="bikes">Rowery</span>
+            </button>
+        </section>
+        <button id="addItemBtn" class="btn btn-fab btn-primary" data-tooltip="Dodaj serwis" data-tooltip-pos="left">
+            <span>+</span>
+        </button>
+        <div class="add-client-fab-wrapper">
+            <button id="addClientBtn" class="btn btn-fab-client" data-tooltip="Dodaj klienta" data-tooltip-pos="right">
+                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+        </div>
+    </main>
+
+</div><!-- /.container -->
+
+<!-- ── Modal: Dodaj/Edytuj rower ─────────────────────────────────────────────── -->
+<div id="addBikeModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="bikeModalTitle">Dodaj nowy rower</h2>
+            <button class="close-btn" id="closeBikeModal">&times;</button>
+        </div>
+        <form id="addBikeForm">
+            <div class="form-group">
+                <label for="bikeOwnerName">Imię i nazwisko *</label>
+                <input type="text" id="bikeOwnerName" required placeholder="np. Jan Kowalski">
+            </div>
+            <div class="form-group">
+                <label for="bikeOwnerPhone">Numer telefonu *</label>
+                <input type="tel" id="bikeOwnerPhone" required placeholder="np. 500 123 456">
+            </div>
+            <div class="form-group">
+                <label for="bikeOwnerEmail">Email <span style="font-weight:400;color:var(--text-secondary)">(opcjonalnie)</span></label>
+                <input type="email" id="bikeOwnerEmail" placeholder="np. jan@example.com">
+            </div>
+            <div class="form-group">
+                <label for="bikeBrand">Marka roweru</label>
+                <input type="text" id="bikeBrand" placeholder="np. Trek, Giant, Specialized..."
+                    list="bikeBrandList" autocomplete="off">
+                <datalist id="bikeBrandList"></datalist>
+            </div>
+            <div class="form-group">
+                <label for="bikeModel">Model roweru</label>
+                <input type="text" id="bikeModel" placeholder="np. Marlin 5, Defy Advanced...">
+            </div>
+            <div class="form-group">
+                <label for="bikeYear">Rocznik <span style="font-weight:400;color:var(--text-secondary)">(opcjonalnie)</span></label>
+                <input type="number" id="bikeYear" placeholder="np. 2022" min="1900" max="2099">
+            </div>
+            <div class="form-group">
+                <label for="bikeFrameNumber">Numer ramy (VIN) <span style="font-weight:400;color:var(--text-secondary)">(opcjonalnie)</span></label>
+                <input type="text" id="bikeFrameNumber" placeholder="np. WTU10340XBZA01234">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelBikeBtn">Anuluj</button>
+                <button type="submit" class="btn btn-primary">Zapisz rower</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── Modal: Dodaj/Edytuj serwis ────────────────────────────────────────────── -->
+<div id="addRepairModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="repairModalTitle">Dodaj nowy serwis</h2>
+            <button class="close-btn" id="closeRepairModal">&times;</button>
+        </div>
+        <form id="addRepairForm">
+            <!-- Selektor roweru -->
+            <div class="form-group">
+                <label>Rower *</label>
+                <div class="bike-selector" id="bikeSelector">
+                    <div class="bike-search-wrapper" id="bikeSearchWrapper">
+                        <input
+                            type="text"
+                            id="bikeSearchInput"
+                            placeholder="Szukaj po nazwisku lub telefonie..."
+                            autocomplete="off"
+                        >
+                        <div class="bike-dropdown hidden" id="bikeDropdown"></div>
+                    </div>
+                    <div class="selected-bike-card hidden" id="selectedBikeCard"></div>
+                </div>
+            </div>
+
+            <!-- Data serwisu -->
+            <div class="form-group">
+                <label for="repairDate">Data serwisu *</label>
+                <input type="date" id="repairDate" required>
+            </div>
+
+            <!-- Lista usług -->
+            <div class="form-group">
+                <label>Zakres serwisu *</label>
+                <div class="services-section">
+                    <div class="services-checklist" id="servicesChecklist">
+                        <p class="no-templates-msg">Ładowanie...</p>
+                    </div>
+                    <div class="custom-service-input-row">
+                        <input type="text" id="customServiceInput" placeholder="Dodaj własną usługę...">
+                        <button type="button" id="addCustomServiceBtn" class="btn btn-primary">Dodaj</button>
+                    </div>
+                    <div class="custom-services-tags" id="customServicesTags"></div>
+                </div>
+            </div>
+
+            <!-- Uwagi -->
+            <div class="form-group">
+                <label for="repairNotes">Uwagi <span style="font-weight:400;color:var(--text-secondary)">(opcjonalnie)</span></label>
+                <textarea id="repairNotes" rows="3" placeholder="Dodatkowe uwagi..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelRepairBtn">Anuluj</button>
+                <button type="submit" class="btn btn-primary">Zapisz serwis</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── Modal: Ustawienia warsztatu ───────────────────────────────────────────── -->
+<div id="settingsModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Ustawienia warsztatu</h2>
+            <button class="close-btn" id="closeSettingsModal">&times;</button>
+        </div>
+        <div class="settings-body">
+
+            <!-- Dane warsztatu -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Dane warsztatu (dla PDF)</h3>
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label>Logo warsztatu</label>
+                        <div class="logo-upload-area">
+                            <div class="logo-preview-wrap">
+                                <img id="logoPreview" class="logo-preview hidden" alt="Logo warsztatu">
+                                <div id="logoPlaceholder" class="logo-placeholder">Brak logo</div>
+                            </div>
+                            <div class="logo-upload-actions">
+                                <label for="logoFileInput" class="btn btn-secondary logo-upload-btn">Wgraj logo</label>
+                                <input type="file" id="logoFileInput" accept="image/*" style="display:none">
+                                <button type="button" id="removeLogoBtn" class="btn btn-secondary hidden">Usuń logo</button>
+                            </div>
+                            <small class="logo-hint">PNG lub JPG, zalecany format poziomy</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="settingsName">Nazwa warsztatu</label>
+                        <input type="text" id="settingsName" placeholder="np. Rower Serwis Kowalski">
+                    </div>
+                    <div class="form-group">
+                        <label for="settingsAddress">Adres</label>
+                        <input type="text" id="settingsAddress" placeholder="ul. Rowerowa 1, 00-000 Warszawa">
+                    </div>
+                    <div class="form-group">
+                        <label for="settingsPhone">Telefon</label>
+                        <input type="tel" id="settingsPhone" placeholder="500 123 456">
+                    </div>
+                    <div class="form-group">
+                        <label for="settingsEmail">Email</label>
+                        <input type="email" id="settingsEmail" placeholder="warsztat@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="settingsNip">NIP</label>
+                        <input type="text" id="settingsNip" placeholder="000-000-00-00">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Zapisz ustawienia</button>
+                </form>
+            </div>
+
+            <!-- Szablony usług -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Lista standardowych usług</h3>
+                <div class="template-list" id="templateList">
+                    <p class="no-templates-msg">Ładowanie...</p>
+                </div>
+                <div class="template-add-row">
+                    <input type="text" id="newTemplateInput" placeholder="np. Wymiana łańcucha">
+                    <button type="button" id="addTemplateBtn" class="btn btn-primary">Dodaj</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal: Nowy klient + serwis ────────────────────────────────────────────── -->
+<div id="addClientModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Nowy klient i serwis</h2>
+            <button class="close-btn" id="closeClientModal">&times;</button>
+        </div>
+        <form id="addClientForm">
+            <!-- Sekcja: dane klienta -->
+            <div class="client-form-section">
+                <div class="client-section-title">Dane klienta i roweru</div>
+                <div class="form-group">
+                    <label for="clientOwnerName">Imię i nazwisko *</label>
+                    <input type="text" id="clientOwnerName" required placeholder="np. Jan Kowalski">
+                </div>
+                <div class="form-group">
+                    <label for="clientOwnerPhone">Numer telefonu *</label>
+                    <input type="tel" id="clientOwnerPhone" required placeholder="np. 500 123 456">
+                </div>
+                <div class="form-group">
+                    <label for="clientOwnerEmail">Email <span style="font-weight:400;color:var(--text-secondary)">(opcjonalnie)</span></label>
+                    <input type="email" id="clientOwnerEmail" placeholder="np. jan@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="clientBikeBrand">Marka roweru</label>
+                    <input type="text" id="clientBikeBrand" placeholder="np. Trek, Giant, Specialized..."
+                        list="clientBikeBrandList" autocomplete="off">
+                    <datalist id="clientBikeBrandList"></datalist>
+                </div>
+                <div class="form-group">
+                    <label for="clientBikeModel">Model roweru</label>
+                    <input type="text" id="clientBikeModel" placeholder="np. Marlin 5, Defy Advanced...">
+                </div>
+                <div class="form-group">
+                    <label for="clientBikeYear">Rocznik <span style="font-weight:400;color:var(--text-secondary)">(opcjonalnie)</span></label>
+                    <input type="number" id="clientBikeYear" placeholder="np. 2022" min="1900" max="2099">
+                </div>
+                <div class="form-group">
+                    <label for="clientBikeFrameNumber">Numer ramy (VIN) <span style="font-weight:400;color:var(--text-secondary)">(opcjonalnie)</span></label>
+                    <input type="text" id="clientBikeFrameNumber" placeholder="np. WTU10340XBZA01234">
+                </div>
+            </div>
+
+            <!-- Sekcja: serwis -->
+            <div class="client-form-section">
+                <label class="client-section-toggle">
+                    <input type="checkbox" id="clientAddRepairToggle">
+                    <span class="client-section-title">Dodaj serwis od razu</span>
+                </label>
+                <div id="clientRepairFields" class="hidden">
+                    <div class="form-group" style="margin-top:14px;">
+                        <label for="clientRepairDate">Data serwisu</label>
+                        <input type="date" id="clientRepairDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Zakres serwisu</label>
+                        <div class="services-section">
+                            <div class="services-checklist" id="clientServicesChecklist">
+                                <p class="no-templates-msg">Ładowanie...</p>
+                            </div>
+                            <div class="custom-service-input-row">
+                                <input type="text" id="clientCustomServiceInput" placeholder="Dodaj własną usługę...">
+                                <button type="button" id="addClientCustomServiceBtn" class="btn btn-primary">Dodaj</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="clientRepairNotes">Uwagi <span style="font-weight:400;color:var(--text-secondary)">(opcjonalnie)</span></label>
+                        <textarea id="clientRepairNotes" rows="3" placeholder="Dodatkowe uwagi..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelClientBtn">Anuluj</button>
+                <button type="submit" class="btn btn-primary">Zapisz</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- PDF print area — hidden, widoczny tylko podczas drukowania -->
+<div id="printArea"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="supabase-client.js"></script>
+<script src="app.js"></script>
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --input-type=module)",
+      "Bash(node -e ' *)",
+      "Bash(/usr/local/bin/node --version)",
+      "Bash(/opt/homebrew/bin/node --version)",
+      "Bash(cp \"/Users/kamil/Prace/Imbus/Logo/bikeimbus-logo.svg\" \"/Users/kamil/Prace/ImbusRower/logo.svg\")",
+      "Bash(python3 -c ' *)",
+      "Read(//tmp/**)",
+      "Bash(npx netlify *)",
+      "Bash(npm --version)",
+      "Bash(git --version)"
+    ]
+  }
+}
