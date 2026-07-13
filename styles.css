@@ -577,6 +577,7 @@ form { padding: 24px; }
 }
 .settings-section form { padding: 0; }
 .settings-section .btn-primary { margin-top: 8px; }
+.backup-hint { font-size: .82rem; color: var(--text-secondary); margin-bottom: 10px; }
 
 .template-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .template-item {

@@ -127,6 +127,7 @@ function setupEventListeners() {
     document.getElementById('newTemplateInput').addEventListener('keypress', e => {
         if (e.key === 'Enter') { e.preventDefault(); handleAddTemplate(); }
     });
+    document.getElementById('exportDbBtn').addEventListener('click', handleExportDatabase);
 
     // Client modal
     document.getElementById('addClientBtn').addEventListener('click', openClientModal);
@@ -278,7 +279,7 @@ function createRepairCard(repair) {
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><polyline points="9 13 11 15 15 11"/></svg>
                 </button>
                 <button type="button" class="btn btn-icon repair-pdf-btn"
-                    data-repair-id="${repair.id}" data-tooltip="Zlecenie PDF" data-tooltip-pos="bottom">
+                    data-repair-id="${repair.id}" data-tooltip="Protokół odbioru" data-tooltip-pos="bottom">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 </button>
                 <button type="button" class="btn btn-icon repair-edit-btn"
@@ -1060,6 +1061,55 @@ async function deleteServiceTemplate(templateId) {
     renderTemplateList();
 }
 
+// ── Kopia zapasowa (pobieranie bazy danych) ───────────────────────────────────
+async function handleExportDatabase() {
+    const btn = document.getElementById('exportDbBtn');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Przygotowywanie...';
+
+    try {
+        // Pobieramy świeże dane wprost z bazy, żeby kopia była na pewno aktualna.
+        const [bikesRes, repairsRes, templatesRes, settingsRes] = await Promise.all([
+            supabase.from('bikes').select('*').eq('user_id', currentUserId).order('owner_name'),
+            supabase.from('bike_repairs').select('*').eq('user_id', currentUserId).order('date', { ascending: false }),
+            supabase.from('service_templates').select('*').eq('user_id', currentUserId).order('created_at'),
+            supabase.from('workshop_settings').select('*').eq('user_id', currentUserId).maybeSingle()
+        ]);
+        if (bikesRes.error) throw bikesRes.error;
+        if (repairsRes.error) throw repairsRes.error;
+
+        const backup = {
+            exported_at: new Date().toISOString(),
+            bikes: bikesRes.data || [],
+            bike_repairs: repairsRes.data || [],
+            service_templates: templatesRes.data || [],
+            workshop_settings: settingsRes.data || {}
+        };
+
+        const json = JSON.stringify(backup, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const dateStr = new Date().toISOString().slice(0, 10);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bike-imbus-baza-${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+
+        showSuccessMessage('Baza danych została pobrana.');
+    } catch (err) {
+        console.error(err);
+        showErrorMessage('Nie udało się pobrać bazy danych.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+    }
+}
+
 // ── Status naprawy ────────────────────────────────────────────────────────────
 async function toggleRepairStatus(repairId) {
     const repair = allRepairs.find(r => r.id === repairId);
@@ -1101,8 +1151,7 @@ function exportRepairToPdf(repairId) {
     if (!repair) return;
     const bike = allBikes.find(b => b.id === repair.bikeId);
     if (!bike) return;
-    const order = repair.orderNumber ? `${repair.orderNumber}-${repair.date.substring(0,4)}` : repair.date;
-    generatePdf(buildPrintHtml(repair, bike), `zlecenie-${order}.pdf`);
+    generatePdf(buildPrintHtml(repair, bike), `protokol-odbioru-${repair.date}.pdf`);
 }
 
 function exportProtocolToPdf(repairId) {
@@ -1110,8 +1159,7 @@ function exportProtocolToPdf(repairId) {
     if (!repair) return;
     const bike = allBikes.find(b => b.id === repair.bikeId);
     if (!bike) return;
-    const order = repair.orderNumber ? `${repair.orderNumber}-${repair.date.substring(0,4)}` : repair.date;
-    generatePdf(buildProtocolHtml(repair, bike), `protokol-${order}.pdf`);
+    generatePdf(buildProtocolHtml(repair, bike), `protokol-przyjecia-${repair.date}.pdf`);
 }
 
 async function generatePdf(bodyHtml) {
@@ -1138,7 +1186,11 @@ function getPrintStyles() {
     return `
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; line-height: 1.45; }
-        .print-doc { }
+        /* Stała wysokość odpowiadająca stronie A5 (jsPDF margin [12,14,12,14]mm) —
+           dzięki temu sekcja "Zakres prac" (flex: 1) rozciąga się i spycha
+           koszty/podpisy na sam dół strony. */
+        .print-doc { width: 120mm; min-height: 186mm; display: flex; flex-direction: column; }
+        .print-section-grow { flex: 1 1 auto; }
         .print-header { text-align: center; padding-bottom: 8pt; border-bottom: 1.5pt solid #000; margin-bottom: 9pt; }
         .print-header-with-logo { display: flex; align-items: center; gap: 12pt; text-align: left; }
         .print-logo { max-height: 70pt; max-width: 150pt; object-fit: contain; flex-shrink: 0; }
@@ -1178,12 +1230,12 @@ function printHeader(ws) {
             ${hasText ? `<div class="print-header-text">
                 ${ws.ws_name    ? `<div class="print-workshop-name">${escapeHtml(ws.ws_name)}</div>` : ''}
                 ${ws.ws_address ? `<div class="print-workshop-detail">${escapeHtml(ws.ws_address)}</div>` : ''}
-                ${(ws.ws_phone || ws.ws_email || ws.ws_nip) ? `<div class="print-workshop-contact">
+                ${(ws.ws_phone || ws.ws_email) ? `<div class="print-workshop-contact">
                     ${ws.ws_phone ? `Tel: ${escapeHtml(ws.ws_phone)}` : ''}
                     ${ws.ws_phone && ws.ws_email ? ' &nbsp;|&nbsp; ' : ''}
                     ${ws.ws_email ? `Email: ${escapeHtml(ws.ws_email)}` : ''}
-                    ${ws.ws_nip  ? ` &nbsp;|&nbsp; NIP: ${escapeHtml(ws.ws_nip)}` : ''}
                 </div>` : ''}
+                ${ws.ws_nip ? `<div class="print-workshop-contact">NIP: ${escapeHtml(ws.ws_nip)}</div>` : ''}
             </div>` : ''}
         </div>`;
 }
@@ -1191,38 +1243,31 @@ function printHeader(ws) {
 function buildPrintHtml(repair, bike) {
     const ws = workshopSettings;
     const bikeLabel = [bike.brand, bike.model, bike.year ? `(${bike.year})` : ''].filter(Boolean).join(' ');
-    const orderLabel = repair.orderNumber
-        ? ` nr ${repair.orderNumber}/${repair.date.substring(0,4)}`
-        : '';
 
     return `
         <div class="print-doc">
             ${printHeader(ws)}
 
             <div class="print-title-row">
-                <span class="print-title-text">Zlecenie serwisowe${escapeHtml(orderLabel)}</span>
+                <span class="print-title-text">Protokół odbioru &nbsp;·&nbsp; ${escapeHtml(formatDate(repair.date))}</span>
             </div>
 
             <div class="print-section">
                 <div class="print-section-label">Klient</div>
-                <div class="print-section-value"><strong>${escapeHtml(bike.ownerName)}</strong></div>
-                <div class="print-section-value">Tel: ${escapeHtml(bike.ownerPhone)}</div>
-                ${bike.ownerEmail ? `<div class="print-section-value">Email: ${escapeHtml(bike.ownerEmail)}</div>` : ''}
+                <div class="print-section-value">
+                    <strong>${escapeHtml(bike.ownerName)}</strong> &nbsp;·&nbsp; Tel: ${escapeHtml(bike.ownerPhone)}${bike.ownerEmail ? ` &nbsp;·&nbsp; Email: ${escapeHtml(bike.ownerEmail)}` : ''}
+                </div>
             </div>
 
             <div class="print-section">
                 <div class="print-section-label">Rower</div>
-                <div class="print-section-value">${escapeHtml(bikeLabel || '—')}</div>
-                ${bike.frameNumber ? `<div class="print-section-value">Nr ramy: ${escapeHtml(bike.frameNumber)}</div>` : ''}
+                <div class="print-section-value">
+                    ${escapeHtml(bikeLabel || '—')}${bike.frameNumber ? ` &nbsp;·&nbsp; Nr ramy: ${escapeHtml(bike.frameNumber)}` : ''}
+                </div>
             </div>
 
-            <div class="print-section">
-                <div class="print-section-label">Data serwisu</div>
-                <div class="print-section-value">${formatDate(repair.date)}</div>
-            </div>
-
-            <div class="print-section">
-                <div class="print-section-label">Zakres serwisu</div>
+            <div class="print-section print-section-grow">
+                <div class="print-section-label">Zakres prac</div>
                 <ul class="print-services-list">
                     ${repair.services.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
                 </ul>
@@ -1247,9 +1292,6 @@ function buildPrintHtml(repair, bike) {
 function buildProtocolHtml(repair, bike) {
     const ws = workshopSettings;
     const bikeLabel = [bike.brand, bike.model, bike.year ? `(${bike.year})` : ''].filter(Boolean).join(' ');
-    const orderLabel = repair.orderNumber
-        ? ` nr ${repair.orderNumber}/${repair.date.substring(0,4)}`
-        : '';
     const wsName = ws.ws_name || 'warsztat';
 
     return `
@@ -1257,28 +1299,24 @@ function buildProtocolHtml(repair, bike) {
             ${printHeader(ws)}
 
             <div class="print-title-row">
-                <span class="print-title-text">Protokół przyjęcia roweru${escapeHtml(orderLabel)}</span>
+                <span class="print-title-text">Protokół przyjęcia roweru &nbsp;·&nbsp; ${escapeHtml(formatDate(repair.date))}</span>
             </div>
 
             <div class="print-section">
                 <div class="print-section-label">Klient</div>
-                <div class="print-section-value"><strong>${escapeHtml(bike.ownerName)}</strong></div>
-                <div class="print-section-value">Tel: ${escapeHtml(bike.ownerPhone)}</div>
-                ${bike.ownerEmail ? `<div class="print-section-value">Email: ${escapeHtml(bike.ownerEmail)}</div>` : ''}
+                <div class="print-section-value">
+                    <strong>${escapeHtml(bike.ownerName)}</strong> &nbsp;·&nbsp; Tel: ${escapeHtml(bike.ownerPhone)}${bike.ownerEmail ? ` &nbsp;·&nbsp; Email: ${escapeHtml(bike.ownerEmail)}` : ''}
+                </div>
             </div>
 
             <div class="print-section">
                 <div class="print-section-label">Rower</div>
-                <div class="print-section-value">${escapeHtml(bikeLabel || '—')}</div>
-                ${bike.frameNumber ? `<div class="print-section-value">Nr ramy: ${escapeHtml(bike.frameNumber)}</div>` : ''}
+                <div class="print-section-value">
+                    ${escapeHtml(bikeLabel || '—')}${bike.frameNumber ? ` &nbsp;·&nbsp; Nr ramy: ${escapeHtml(bike.frameNumber)}` : ''}
+                </div>
             </div>
 
-            <div class="print-section">
-                <div class="print-section-label">Data przyjęcia roweru</div>
-                <div class="print-section-value">${formatDate(repair.date)}</div>
-            </div>
-
-            <div class="print-section">
+            <div class="print-section print-section-grow">
                 <div class="print-section-label">Zakres prac</div>
                 <ul class="print-services-list">
                     ${repair.services.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
