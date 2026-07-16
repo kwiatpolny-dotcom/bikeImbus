@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bikeimbus-v2';
+const CACHE_NAME = 'bikeimbus-v3';
 const LOCAL_ASSETS = [
     '/index.html',
     '/login.html',
