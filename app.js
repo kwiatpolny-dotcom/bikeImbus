@@ -1248,8 +1248,14 @@ function padToFullPage(container) {
     if (!doc || !pin) return;
 
     // Strona A5, margines jsPDF [12,14,12,14]mm → obszar treści 186mm wysokości.
+    // Celujemy trochę poniżej pełnych 186mm (bezpieczny margines), bo drobne
+    // różnice zaokrągleń między pomiarem w żywym DOM a wewnętrzną matematyką
+    // stron w html2canvas/jsPDF potrafią „przechylić” dokument dosłownie
+    // wypełniony do samej krawędzi na dodatkową, prawie pustą drugą stronę
+    // (obcinając ostatnią linijkę w połowie). Kilka mm zapasu kosztuje
+    // niewiele miejsca, a całkowicie eliminuje to ryzyko.
     const ruler = document.createElement('div');
-    ruler.style.cssText = 'height:186mm; width:0;';
+    ruler.style.cssText = 'height:180mm; width:0;';
     container.appendChild(ruler);
     const targetHeight = ruler.getBoundingClientRect().height;
     container.removeChild(ruler);
