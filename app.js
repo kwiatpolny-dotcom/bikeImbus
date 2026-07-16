@@ -1176,23 +1176,45 @@ async function generatePdf(bodyHtml) {
     //    problem html2canvas z przechwytywaniem contentDocument z iframe) —
     //    dokument wyglądał jakby CSS w ogóle nie istniał (brak formatowania,
     //    logo w oryginalnym rozmiarze, tekst się przelewał na 2. stronę).
-    // Teraz: dokument renderujemy NORMALNIE, w głównym document.body, na
-    // zwykłej pozycji (0,0) — bez żadnych ujemnych/sztucznych przesunięć i bez
-    // ruszania ustawień html2canvas — więc nie ma niczego do zgadywania. Żeby
-    // użytkownik nie widział surowego wydruku, zasłaniamy całość nieprzezroczystą
-    // nakładką na czas przechwytywania.
+    // 4. Kontener z position:fixed — html2canvas OFICJALNIE NIE WSPIERA
+    //    position:fixed (udokumentowane ograniczenie biblioteki: elementy
+    //    z position:fixed są renderowane w przestrzeni współrzędnych całego
+    //    dokumentu, a nie widocznego okna). Skutek zależał od tego, czy i jak
+    //    bardzo strona aplikacji była przescrollowana w momencie eksportu:
+    //    pusty margines nad nagłówkiem, brakujące sekcje, pusta druga strona.
+    //    Dodatkowo: wysokość dokumentu do wyliczenia "spacera" (padToFullPage)
+    //    była mierzona zanim obrazek logo zdążył się w pełni zdekodować —
+    //    zaniżony pomiar dawał za duży spacer, a gdy logo dociążało się do
+    //    pełnego rozmiaru, treść i tak przelewała się na drugą stronę.
+    // Teraz: kontener ma position:absolute (jedyna wspierana przez html2canvas
+    // opcja "wyjęcia z normalnego układu" bez position:static), a okno jest
+    // tymczasowo przewijane do (0,0) na czas przechwytywania, więc dokument
+    // renderuje się dokładnie w miejscu, gdzie html2canvas się go spodziewa —
+    // niezależnie od tego, gdzie użytkownik przewinął stronę aplikacji.
+    // Dodatkowo czekamy, aż logo w pełni się zdekoduje, zanim zmierzymy
+    // wysokość dokumentu pod spacer.
+    const savedScrollX = window.scrollX, savedScrollY = window.scrollY;
+    window.scrollTo(0, 0);
+
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed; inset:0; background:#fff; z-index:99998;';
     document.body.appendChild(overlay);
 
     const container = document.createElement('div');
-    container.style.cssText = 'position:fixed; top:0; left:0; z-index:99999; background:#fff;';
+    container.style.cssText = 'position:absolute; top:0; left:0; z-index:99999; background:#fff;';
     container.innerHTML = `<style>${getPrintStyles()}</style>${bodyHtml}`;
     document.body.appendChild(container);
 
     try {
-        // Dajemy przeglądarce klatkę na naliczenie stylów/layoutu i zdekodowanie
-        // obrazka logo, zanim html2canvas zrobi zrzut.
+        // Czekamy aż wszystkie obrazki (logo) będą w pełni zdekodowane, zanim
+        // zmierzymy wysokość dokumentu pod spacer — inaczej licząc na
+        // podstawie jeszcze nie w pełni wyrenderowanego logo, dostajemy za
+        // duży spacer i treść przelewa się na drugą stronę.
+        await Promise.all(Array.from(container.querySelectorAll('img')).map(img =>
+            img.decode ? img.decode().catch(() => {}) : new Promise(res => {
+                if (img.complete) res(); else img.addEventListener('load', res, { once: true });
+            })
+        ));
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
         const target = container.querySelector('.print-doc');
@@ -1210,6 +1232,7 @@ async function generatePdf(bodyHtml) {
     } finally {
         document.body.removeChild(container);
         document.body.removeChild(overlay);
+        window.scrollTo(savedScrollX, savedScrollY);
     }
 }
 
