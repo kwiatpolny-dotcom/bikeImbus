@@ -1168,6 +1168,7 @@ async function generatePdf(bodyHtml) {
     container.innerHTML = `<div><style>${getPrintStyles()}</style>${bodyHtml}</div>`;
     document.body.appendChild(container);
     try {
+        padToFullPage(container);
         const blob = await html2pdf().set({
             margin: [12, 14, 12, 14],
             image: { type: 'jpeg', quality: 0.98 },
@@ -1179,6 +1180,34 @@ async function generatePdf(bodyHtml) {
         setTimeout(() => URL.revokeObjectURL(url), 60000);
     } finally {
         document.body.removeChild(container);
+    }
+}
+
+// Jeśli treść dokumentu jest krótsza niż jedna strona A5, dokładamy zwykły,
+// zmierzony w pikselach element-wypełniacz tuż przed sekcją oznaczoną klasą
+// "print-pin-bottom" (koszty/podpis albo zgoda RODO/podpisy) — dzięki temu
+// ta sekcja wizualnie spada na sam dół strony, a "Zakres prac" ma
+// maksymalnie dużo miejsca. Celowo bez CSS flex i bez ruszania ustawień
+// html2canvas — zwykły blok o policzonej wysokości jest dużo pewniejszy przy
+// przechwytywaniu do PDF.
+function padToFullPage(container) {
+    const doc = container.querySelector('.print-doc');
+    const pin = container.querySelector('.print-pin-bottom');
+    if (!doc || !pin) return;
+
+    // Strona A5, margines jsPDF [12,14,12,14]mm → obszar treści 186mm wysokości.
+    const ruler = document.createElement('div');
+    ruler.style.cssText = 'height:186mm;width:0;visibility:hidden;';
+    container.appendChild(ruler);
+    const targetHeight = ruler.getBoundingClientRect().height;
+    container.removeChild(ruler);
+
+    const currentHeight = doc.getBoundingClientRect().height;
+    const missing = targetHeight - currentHeight;
+    if (missing > 0) {
+        const spacer = document.createElement('div');
+        spacer.style.height = missing + 'px';
+        pin.parentNode.insertBefore(spacer, pin);
     }
 }
 
@@ -1270,7 +1299,7 @@ function buildPrintHtml(repair, bike) {
                 ${repair.notes ? `<div class="print-notes">Uwagi: ${escapeHtml(repair.notes)}</div>` : ''}
             </div>
 
-            <div class="print-costs">
+            <div class="print-costs print-pin-bottom">
                 <table class="print-costs-table">
                     <tr><td>Koszt części:</td><td class="print-cost-value">&nbsp;</td></tr>
                     <tr><td>Koszt robocizny:</td><td class="print-cost-value">&nbsp;</td></tr>
@@ -1320,7 +1349,7 @@ function buildProtocolHtml(repair, bike) {
                 ${repair.notes ? `<div class="print-notes">Uwagi: ${escapeHtml(repair.notes)}</div>` : ''}
             </div>
 
-            <div class="print-section print-rodo">
+            <div class="print-section print-rodo print-pin-bottom">
                 <div class="print-section-label">Zgoda na przetwarzanie danych (RODO)</div>
                 <div class="print-rodo-text">Wyrażam zgodę na przetwarzanie moich danych osobowych przez <strong>${escapeHtml(wsName)}</strong> w celu realizacji usługi serwisowej roweru, zgodnie z art. 6 ust. 1 lit. b RODO (Rozporządzenie Parlamentu Europejskiego i Rady (UE) 2016/679). Dane będą przetwarzane przez okres niezbędny do realizacji usługi i nie będą udostępniane podmiotom trzecim bez mojej zgody.</div>
             </div>
