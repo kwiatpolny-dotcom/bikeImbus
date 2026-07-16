@@ -1168,37 +1168,12 @@ async function generatePdf(bodyHtml) {
     container.innerHTML = `<div><style>${getPrintStyles()}</style>${bodyHtml}</div>`;
     document.body.appendChild(container);
     try {
-        const target = container.firstElementChild;
-
-        // Czekamy na dwie klatki, żeby przeglądarka na pewno przeliczyła
-        // layout (ważne zwłaszcza dla elementów z wysokością w mm) zanim
-        // zmierzymy jego faktyczny rozmiar.
-        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-        // html2canvas domyślnie robi zrzut ograniczony do widocznego okna
-        // przeglądarki (window.innerWidth/innerHeight), a nie do faktycznej
-        // wysokości treści. Jeśli dokument jest wyższy niż aktualne okno
-        // (np. niezmaksymalizowane okno na Windowsie), dolna część zostaje
-        // ucięta. Podając jawnie windowWidth/windowHeight równe realnemu
-        // rozmiarowi elementu, zapewniamy pełny zrzut niezależnie od tego,
-        // jak duże jest w danym momencie okno przeglądarki.
-        const width = target.scrollWidth;
-        const height = target.scrollHeight;
-
         const blob = await html2pdf().set({
             margin: [12, 14, 12, 14],
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                windowWidth: width,
-                windowHeight: height,
-                scrollX: 0,
-                scrollY: 0
-            },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
-        }).from(target).output('blob');
+        }).from(container.firstElementChild).output('blob');
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
         setTimeout(() => URL.revokeObjectURL(url), 60000);
@@ -1211,11 +1186,7 @@ function getPrintStyles() {
     return `
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; line-height: 1.45; }
-        /* Stała wysokość odpowiadająca stronie A5 (jsPDF margin [12,14,12,14]mm) —
-           dzięki temu sekcja "Zakres prac" (flex: 1) rozciąga się i spycha
-           koszty/podpisy na sam dół strony. */
-        .print-doc { width: 120mm; min-height: 186mm; display: flex; flex-direction: column; }
-        .print-section-grow { flex: 1 1 auto; }
+        .print-doc { }
         .print-header { text-align: center; padding-bottom: 8pt; border-bottom: 1.5pt solid #000; margin-bottom: 9pt; }
         .print-header-with-logo { display: flex; align-items: center; gap: 12pt; text-align: left; }
         .print-logo { max-height: 70pt; max-width: 150pt; object-fit: contain; flex-shrink: 0; }
@@ -1291,7 +1262,7 @@ function buildPrintHtml(repair, bike) {
                 </div>
             </div>
 
-            <div class="print-section print-section-grow">
+            <div class="print-section">
                 <div class="print-section-label">Zakres prac</div>
                 <ul class="print-services-list">
                     ${repair.services.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
@@ -1341,7 +1312,7 @@ function buildProtocolHtml(repair, bike) {
                 </div>
             </div>
 
-            <div class="print-section print-section-grow">
+            <div class="print-section">
                 <div class="print-section-label">Zakres prac</div>
                 <ul class="print-services-list">
                     ${repair.services.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
