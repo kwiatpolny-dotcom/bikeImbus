@@ -1163,28 +1163,40 @@ function exportProtocolToPdf(repairId) {
 }
 
 async function generatePdf(bodyHtml) {
-    // Dokument renderujemy w osobnym, w pełni izolowanym <iframe> — zamiast
-    // (jak poprzednio) wstawiać go bezpośrednio do strony aplikacji,
-    // przesuniętego daleko poza ekran. Przy tamtym podejściu html2canvas
-    // musiał sam zgadywać, gdzie względem okna przeglądarki użytkownika
-    // znajduje się nasz dokument — i to właśnie powodowało przycinanie oraz
-    // puste strony (zależnie od wielkości okna). W osobnym iframe mamy
-    // własne, w pełni kontrolowane "okno", więc przechwytywanie jest
-    // przewidywalne niezależnie od tego, jak wygląda reszta aplikacji.
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed; left:-10000px; top:0; width:700px; height:1200px; border:0;';
-    document.body.appendChild(iframe);
+    // Historia podejść (dla przyszłych zmian - nie kasować bez powodu):
+    // 1. Zwykły div z position:absolute;left:-9999px — html2canvas w niektórych
+    //    przeglądarkach/oknach źle liczył obszar do przechwycenia przy tak dużym
+    //    ujemnym przesunięciu: przycięcia, czasem puste strony.
+    // 2. Jawne windowWidth/windowHeight/scrollX:0/scrollY:0 dla html2canvas przy
+    //    tym samym przesunięciu -9999px — jeszcze gorzej: kazaliśmy html2canvas
+    //    patrzeć na obszar [0,0,W,H], czyli DOKŁADNIE tam, gdzie dokumentu už nie
+    //    było (bo leżał na x:-9999) → zawsze pusta strona.
+    // 3. Osobny <iframe> z własnym document.write() — html2canvas nie stosował
+    //    w ogóle stylów CSS z takiego zagnieżdżonego dokumentu (znany, opisywany
+    //    problem html2canvas z przechwytywaniem contentDocument z iframe) —
+    //    dokument wyglądał jakby CSS w ogóle nie istniał (brak formatowania,
+    //    logo w oryginalnym rozmiarze, tekst się przelewał na 2. stronę).
+    // Teraz: dokument renderujemy NORMALNIE, w głównym document.body, na
+    // zwykłej pozycji (0,0) — bez żadnych ujemnych/sztucznych przesunięć i bez
+    // ruszania ustawień html2canvas — więc nie ma niczego do zgadywania. Żeby
+    // użytkownik nie widział surowego wydruku, zasłaniamy całość nieprzezroczystą
+    // nakładką na czas przechwytywania.
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; inset:0; background:#fff; z-index:99998;';
+    document.body.appendChild(overlay);
+
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed; top:0; left:0; z-index:99999; background:#fff;';
+    container.innerHTML = `<style>${getPrintStyles()}</style>${bodyHtml}`;
+    document.body.appendChild(container);
 
     try {
-        const idoc = iframe.contentDocument;
-        idoc.open();
-        idoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>${getPrintStyles()}</style></head><body>${bodyHtml}</body></html>`);
-        idoc.close();
+        // Dajemy przeglądarce klatkę na naliczenie stylów/layoutu i zdekodowanie
+        // obrazka logo, zanim html2canvas zrobi zrzut.
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-        await waitForIframeReady(iframe);
-
-        const target = idoc.querySelector('.print-doc');
-        padToFullPage(idoc, target);
+        const target = container.querySelector('.print-doc');
+        padToFullPage(container);
 
         const blob = await html2pdf().set({
             margin: [12, 14, 12, 14],
@@ -1196,16 +1208,9 @@ async function generatePdf(bodyHtml) {
         window.open(url, '_blank');
         setTimeout(() => URL.revokeObjectURL(url), 60000);
     } finally {
-        document.body.removeChild(iframe);
+        document.body.removeChild(container);
+        document.body.removeChild(overlay);
     }
-}
-
-function waitForIframeReady(iframe) {
-    return new Promise(resolve => {
-        const settle = () => requestAnimationFrame(() => requestAnimationFrame(resolve));
-        if (iframe.contentDocument.readyState === 'complete') settle();
-        else iframe.addEventListener('load', settle, { once: true });
-    });
 }
 
 // Jeśli treść dokumentu jest krótsza niż jedna strona A5, dokładamy zwykły,
@@ -1214,21 +1219,22 @@ function waitForIframeReady(iframe) {
 // ta sekcja wizualnie spada na sam dół strony, a "Zakres prac" ma
 // maksymalnie dużo miejsca. Zabezpieczone górnym limitem, żeby błąd pomiaru
 // nigdy nie mógł spowodować rozjechania dokumentu na więcej niż jedną stronę.
-function padToFullPage(idoc, doc) {
-    const pin = idoc.querySelector('.print-pin-bottom');
+function padToFullPage(container) {
+    const doc = container.querySelector('.print-doc');
+    const pin = container.querySelector('.print-pin-bottom');
     if (!doc || !pin) return;
 
     // Strona A5, margines jsPDF [12,14,12,14]mm → obszar treści 186mm wysokości.
-    const ruler = idoc.createElement('div');
+    const ruler = document.createElement('div');
     ruler.style.cssText = 'height:186mm; width:0;';
-    idoc.body.appendChild(ruler);
+    container.appendChild(ruler);
     const targetHeight = ruler.getBoundingClientRect().height;
-    idoc.body.removeChild(ruler);
+    container.removeChild(ruler);
 
     const currentHeight = doc.getBoundingClientRect().height;
     const missing = Math.max(0, Math.min(targetHeight - currentHeight, targetHeight));
     if (missing > 0) {
-        const spacer = idoc.createElement('div');
+        const spacer = document.createElement('div');
         spacer.style.height = missing + 'px';
         pin.parentNode.insertBefore(spacer, pin);
     }
@@ -1238,7 +1244,7 @@ function getPrintStyles() {
     return `
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; line-height: 1.45; }
-        .print-doc { }
+        .print-doc { width: 120mm; background: #fff; }
         .print-header { text-align: center; padding-bottom: 8pt; border-bottom: 1.5pt solid #000; margin-bottom: 9pt; }
         .print-header-with-logo { display: flex; align-items: center; gap: 12pt; text-align: left; }
         .print-logo { max-height: 70pt; max-width: 150pt; object-fit: contain; flex-shrink: 0; }
