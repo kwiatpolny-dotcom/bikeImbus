@@ -33,6 +33,7 @@ let editingBikeId    = null;
 let editingRepairId  = null;
 let currentUserId    = null;
 let selectedBikeForRepair = null;
+let returnToRepairModalAfterBikeEdit = false;
 let customServices   = [];
 let clientCustomServices = [];
 let _pendingLogo     = '';
@@ -244,7 +245,10 @@ function displayRepairs(repairs) {
         header.className = 'repair-group-header';
         header.innerHTML = `<span>${escapeHtml(group.label)}</span>`;
         repairsList.appendChild(header);
-        group.items.forEach(r => repairsList.appendChild(createRepairCard(r)));
+        // Zakończone serwisy lądują na dole grupy — sortowanie jest stabilne,
+        // więc kolejność w obrębie "do naprawy" i "zakończono" się nie zmienia.
+        const sorted = [...group.items].sort((a, b) => (a.status === 'done') - (b.status === 'done'));
+        sorted.forEach(r => repairsList.appendChild(createRepairCard(r)));
     });
 }
 
@@ -270,8 +274,10 @@ function createRepairCard(repair) {
                     <span class="repair-date">📅 ${formatDate(repair.date)}</span>
                     ${orderBadge}
                 </div>
-                <div class="repair-owner">${ownerLine}</div>
-                ${bikeLabel ? `<div class="repair-bike-model">${bikeLabel}</div>` : ''}
+                <div class="repair-bike-link" data-bike-id="${repair.bikeId}" data-tooltip="Pokaż wszystkie naprawy tego roweru">
+                    <div class="repair-owner">${ownerLine}</div>
+                    ${bikeLabel ? `<div class="repair-bike-model">${bikeLabel}</div>` : ''}
+                </div>
             </div>
             <div class="card-actions">
                 <button type="button" class="btn btn-icon repair-protocol-btn"
@@ -433,12 +439,14 @@ function handleRepairCardClick(e) {
     const pdfBtn      = e.target.closest('.repair-pdf-btn');
     const editBtn     = e.target.closest('.repair-edit-btn');
     const deleteBtn   = e.target.closest('.repair-delete-btn');
+    const bikeLink    = e.target.closest('.repair-bike-link');
 
     if (statusBtn)   { toggleRepairStatus(statusBtn.dataset.repairId); return; }
     if (protocolBtn) { exportProtocolToPdf(protocolBtn.dataset.repairId); return; }
     if (pdfBtn)      { exportRepairToPdf(pdfBtn.dataset.repairId); return; }
     if (editBtn)     { const r = allRepairs.find(r => r.id === editBtn.dataset.repairId); if (r) openRepairModal(r); return; }
-    if (deleteBtn)   { deleteRepair(deleteBtn.dataset.repairId); }
+    if (deleteBtn)   { deleteRepair(deleteBtn.dataset.repairId); return; }
+    if (bikeLink?.dataset.bikeId) { currentBikeFilter = bikeLink.dataset.bikeId; switchView('repairs'); }
 }
 
 // ── Wyszukiwanie ──────────────────────────────────────────────────────────────
@@ -533,12 +541,26 @@ function selectBikeForRepair(bike) {
                 ${bike.ownerEmail ? `<br><small>${escapeHtml(bike.ownerEmail)}</small>` : ''}
                 ${bikeLabel ? `<br>${escapeHtml(bikeLabel)}` : ''}
                 ${bike.frameNumber ? `<br><small>Nr ramy: ${escapeHtml(bike.frameNumber)}</small>` : ''}
+                <br><button type="button" class="edit-selected-bike-btn" id="editSelectedBikeBtn">Edytuj dane roweru</button>
             </div>
             <button type="button" class="clear-bike-btn" id="clearBikeBtn">×</button>
         </div>
     `;
     card.classList.remove('hidden');
     document.getElementById('clearBikeBtn').addEventListener('click', clearBikeSelection);
+    document.getElementById('editSelectedBikeBtn').addEventListener('click', () => editSelectedBikeFromRepairModal(bike.id));
+}
+
+// Otwiera edycję danych roweru bez tracenia w toku wypełnianego formularza
+// serwisu — chowa (nie zamyka/resetuje) modal serwisu, a po zapisaniu lub
+// anulowaniu edycji roweru (closeBikeModal) wraca do niego z odświeżonymi
+// danymi wybranego roweru.
+function editSelectedBikeFromRepairModal(bikeId) {
+    const bike = allBikes.find(b => b.id === bikeId);
+    if (!bike) return;
+    repairModal.classList.add('hidden');
+    returnToRepairModalAfterBikeEdit = true;
+    openBikeModal(bike);
 }
 
 function clearBikeSelection() {
@@ -555,6 +577,7 @@ function renderServicesChecklist(preselected = [], containerId = 'servicesCheckl
     const list = document.getElementById(containerId);
     if (!list) return;
     list.innerHTML = '';
+    populateServiceSuggestions();
 
     if (allTemplates.length === 0) {
         list.innerHTML = '<p class="no-templates-msg">Brak usług. Wpisz poniżej lub dodaj w <strong>Ustawieniach</strong> (⚙️).</p>';
@@ -570,6 +593,15 @@ function renderServicesChecklist(preselected = [], containerId = 'servicesCheckl
         `;
         list.appendChild(label);
     });
+}
+
+// Podpowiedzi (natywny <datalist>) dla pola "Dodaj własną usługę" — po
+// wpisaniu kilku liter przeglądarka sama pokaże pasujące, już zdefiniowane
+// usługi z allTemplates.
+function populateServiceSuggestions() {
+    const datalist = document.getElementById('serviceSuggestions');
+    if (!datalist) return;
+    datalist.innerHTML = allTemplates.map(t => `<option value="${escapeHtml(t.name)}">`).join('');
 }
 
 async function addCustomServiceTo(context = 'repair') {
@@ -652,15 +684,20 @@ async function handleBikeFormSubmit(e) {
     submitBtn.innerHTML = '⏳ Zapisywanie...';
 
     try {
-        const result = editingBikeId
+        const wasEditing = !!editingBikeId;
+        const result = wasEditing
             ? await supabase.from('bikes').update(bikeData).eq('id', editingBikeId)
             : await supabase.from('bikes').insert(bikeData);
 
         if (result.error) throw result.error;
 
-        closeBikeModal();
-        showSuccessMessage(editingBikeId ? 'Rower zaktualizowany!' : 'Rower dodany!');
+        // Wczytujemy świeże dane PRZED zamknięciem modala roweru, żeby — jeśli
+        // wracamy do modala serwisu (edycja roweru wywołana stamtąd) —
+        // podgląd wybranego roweru odświeżył się z aktualnymi danymi, a nie
+        // z tymi sprzed edycji.
         await loadData();
+        closeBikeModal();
+        showSuccessMessage(wasEditing ? 'Rower zaktualizowany!' : 'Rower dodany!');
     } catch (err) {
         console.error(err);
         showErrorMessage('Wystąpił błąd podczas zapisywania roweru.');
@@ -709,8 +746,9 @@ async function handleRepairFormSubmit(e) {
 
         if (result.error) throw result.error;
 
+        const wasEditingRepair = !!editingRepairId;
         closeRepairModal();
-        showSuccessMessage(editingRepairId ? 'Serwis zaktualizowany!' : 'Serwis zapisany!');
+        showSuccessMessage(wasEditingRepair ? 'Serwis zaktualizowany!' : 'Serwis zapisany!');
         await loadData();
     } catch (err) {
         console.error(err);
@@ -748,6 +786,20 @@ function closeBikeModal() {
     document.body.style.overflow = '';
     addBikeForm.reset();
     editingBikeId = null;
+
+    // Rower był edytowany z poziomu okna serwisu (patrz
+    // editSelectedBikeFromRepairModal) — wracamy do niego, zachowując to, co
+    // użytkownik już wpisał (data, usługi, uwagi), i odświeżając podgląd
+    // wybranego roweru na wypadek zmiany jego danych.
+    if (returnToRepairModalAfterBikeEdit) {
+        returnToRepairModalAfterBikeEdit = false;
+        repairModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        if (selectedBikeForRepair) {
+            const fresh = allBikes.find(b => b.id === selectedBikeForRepair.id);
+            if (fresh) selectBikeForRepair(fresh);
+        }
+    }
 }
 
 function populateBrandDatalist() {
@@ -999,6 +1051,7 @@ async function handleSettingsSave(e) {
 function renderTemplateList() {
     const list = document.getElementById('templateList');
     list.innerHTML = '';
+    populateServiceSuggestions();
 
     if (allTemplates.length === 0) {
         list.innerHTML = '<p class="no-templates-msg">Brak szablonów. Dodaj poniżej.</p>';

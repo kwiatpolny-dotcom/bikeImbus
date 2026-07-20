@@ -185,7 +185,7 @@
                         <p class="no-templates-msg">Ładowanie...</p>
                     </div>
                     <div class="custom-service-input-row">
-                        <input type="text" id="customServiceInput" placeholder="Dodaj własną usługę...">
+                        <input type="text" id="customServiceInput" list="serviceSuggestions" autocomplete="off" placeholder="Dodaj własną usługę...">
                         <button type="button" id="addCustomServiceBtn" class="btn btn-primary">Dodaj</button>
                     </div>
                     <div class="custom-services-tags" id="customServicesTags"></div>
@@ -342,7 +342,7 @@
                                 <p class="no-templates-msg">Ładowanie...</p>
                             </div>
                             <div class="custom-service-input-row">
-                                <input type="text" id="clientCustomServiceInput" placeholder="Dodaj własną usługę...">
+                                <input type="text" id="clientCustomServiceInput" list="serviceSuggestions" autocomplete="off" placeholder="Dodaj własną usługę...">
                                 <button type="button" id="addClientCustomServiceBtn" class="btn btn-primary">Dodaj</button>
                             </div>
                         </div>
@@ -364,6 +364,10 @@
 
 <!-- PDF print area — hidden, widoczny tylko podczas drukowania -->
 <div id="printArea"></div>
+
+<!-- Podpowiedzi (autocomplete) dla pola "Dodaj własną usługę" — współdzielona
+     przez modal serwisu i modal nowego klienta, wypełniana w populateServiceSuggestions() -->
+<datalist id="serviceSuggestions"></datalist>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>

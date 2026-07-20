@@ -243,6 +243,11 @@ body {
 }
 .repair-owner { font-size: .95rem; font-weight: 700; color: var(--primary-color); }
 .repair-bike-model { font-size: .85rem; color: var(--secondary-color); font-weight: 500; }
+.repair-bike-link {
+    cursor: pointer; border-radius: 6px; margin: -2px -4px; padding: 2px 4px;
+    transition: background .12s ease;
+}
+.repair-bike-link:hover { background: rgba(46,96,178,.08); }
 .repair-notes {
     font-size: .82rem; color: var(--text-secondary);
     margin-top: 6px; font-style: italic;
@@ -489,6 +494,12 @@ form { padding: 24px; }
     line-height: 1; flex-shrink: 0; margin-top: -2px;
 }
 .clear-bike-btn:hover { color: var(--primary-color); }
+.edit-selected-bike-btn {
+    background: none; border: none; padding: 0; margin-top: 4px;
+    color: var(--primary-color); font-size: .82rem; font-weight: 600;
+    text-decoration: underline; cursor: pointer;
+}
+.edit-selected-bike-btn:hover { opacity: .8; }
 
 /* ── Lista usług w formularzu ────────────────────────────────────────────────── */
 .services-section {
